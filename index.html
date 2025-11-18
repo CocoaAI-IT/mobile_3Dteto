@@ -8,11 +8,12 @@
     <style>
         :root {
             --bg-color: #050510;
-            --panel-bg: rgba(20, 20, 35, 0.8);
+            --panel-bg: rgba(20, 20, 35, 0.9);
             --accent-color: #00f3ff;
             --text-color: #e0f7fa;
-            --btn-color: #2a2a40;
-            --btn-active: #4a4a60;
+            --btn-base: #33334d;
+            --btn-active: #555570;
+            --dpad-size: 60px; /* Size of single d-pad button */
         }
 
         body {
@@ -21,39 +22,41 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Prevent default touch actions like scroll */
+            touch-action: none;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
 
-        /* --- Header / Info --- */
+        /* --- Header --- */
         #header {
             height: 60px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 15px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 0 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
             z-index: 10;
             position: absolute;
             top: 0;
             width: 100%;
             box-sizing: border-box;
-            pointer-events: none; /* Let touches pass through to canvas if needed */
+            pointer-events: none;
         }
 
         .info-box {
-            background: var(--panel-bg);
-            padding: 5px 10px;
+            background: rgba(0, 20, 40, 0.6);
+            padding: 5px 15px;
             border-radius: 8px;
             border: 1px solid rgba(0, 243, 255, 0.3);
             text-align: center;
             pointer-events: auto;
+            min-width: 50px;
+            backdrop-filter: blur(4px);
         }
 
-        .label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .value { font-size: 18px; font-weight: bold; color: var(--accent-color); font-family: monospace; }
+        .label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 20px; font-weight: bold; color: var(--accent-color); font-family: monospace; text-shadow: 0 0 5px var(--accent-color); }
 
         /* --- Game Area --- */
         #game-container {
@@ -74,124 +77,128 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.85);
-            padding: 20px;
-            border-radius: 10px;
+            background: rgba(10, 10, 20, 0.95);
+            padding: 30px;
+            border-radius: 16px;
             border: 2px solid var(--accent-color);
             text-align: center;
             display: none;
             z-index: 20;
-            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
         }
+
+        #message-overlay h2 { margin-top: 0; color: var(--accent-color); }
         
         #start-btn {
             background: var(--accent-color);
             color: #000;
             border: none;
-            padding: 10px 30px;
+            padding: 12px 40px;
             font-size: 18px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 30px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px var(--accent-color);
         }
 
-        /* --- Controls --- */
+        .tutorial {
+            position: absolute;
+            top: 80px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            pointer-events: none;
+        }
+
+        /* --- Controls (New Layout) --- */
         #controls {
-            height: 260px; /* Mobile optimized height */
+            height: 280px; /* Taller for better spacing */
             background: var(--panel-bg);
-            border-top: 2px solid rgba(0, 243, 255, 0.2);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 10px;
             gap: 10px;
             z-index: 10;
             user-select: none;
+            padding-bottom: max(20px, env(safe-area-inset-bottom)); /* iOS Home bar safe area */
         }
 
-        .d-pad {
+        .control-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Center D-PAD */
+        .d-pad-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: repeat(3, var(--dpad-size));
+            grid-template-rows: repeat(3, var(--dpad-size));
             gap: 5px;
-            aspect-ratio: 1;
-            max-width: 180px;
-            margin: 0 auto;
         }
 
-        .action-pad {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 8px;
-            max-width: 180px;
-            margin: 0 auto;
-        }
-
+        /* Button Styles */
         .btn {
-            background: var(--btn-color);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--btn-base);
             border-radius: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
             color: white;
             cursor: pointer;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
-            transition: transform 0.1s, box-shadow 0.1s;
-            touch-action: manipulation;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+            transition: all 0.1s;
+            position: relative;
+            font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn:active {
             transform: translateY(4px);
-            box-shadow: 0 0 0 rgba(0,0,0,0.5);
-            background: var(--btn-active);
+            box-shadow: 0 0 0 rgba(0,0,0,0.4);
+            filter: brightness(1.2);
         }
 
-        .btn-center { grid-column: 2; grid-row: 2; background: #444; font-size: 12px; }
-        .btn-up { grid-column: 2; grid-row: 1; }
-        .btn-down { grid-column: 2; grid-row: 3; }
-        .btn-left { grid-column: 1; grid-row: 2; }
-        .btn-right { grid-column: 3; grid-row: 2; }
+        .btn svg { width: 24px; height: 24px; fill: currentColor; }
 
-        .btn-rotate-h { background: #9c27b0; grid-column: 1; grid-row: 1; font-size: 14px; flex-direction: column;}
-        .btn-rotate-v { background: #e91e63; grid-column: 2; grid-row: 1; font-size: 14px; flex-direction: column;}
-        .btn-soft-drop { background: #2196f3; grid-column: 1; grid-row: 2; }
-        .btn-hard-drop { background: #ff9800; grid-column: 2; grid-row: 2; }
+        /* D-Pad Specifics */
+        .btn-up { grid-column: 2; grid-row: 1; background: #444466; border-radius: 10px 10px 4px 4px; }
+        .btn-down { grid-column: 2; grid-row: 3; background: #444466; border-radius: 4px 4px 10px 10px;}
+        .btn-left { grid-column: 1; grid-row: 2; background: #444466; border-radius: 10px 4px 4px 10px;}
+        .btn-right { grid-column: 3; grid-row: 2; background: #444466; border-radius: 4px 10px 10px 4px;}
+        .btn-cam { grid-column: 2; grid-row: 2; background: #222; font-size: 10px; border-radius: 50%; box-shadow: inset 0 0 5px #000; }
 
-        .btn span { display: block; font-size: 10px; opacity: 0.8; margin-top: 2px;}
-
-        /* --- Tutorial / Hint --- */
-        .tutorial {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Side Buttons */
+        .side-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%; /* Round buttons for actions */
+            flex-direction: column;
             font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            pointer-events: none;
-            width: 100%;
-            text-align: center;
         }
+        
+        .side-btn span { margin-top: 4px; font-size: 10px; opacity: 0.8; }
+
+        .btn-rotate-h { background: #9c27b0; } /* Purple */
+        .btn-rotate-v { background: #e91e63; } /* Pink */
+        .btn-soft { background: #2196f3; width: 60px; height: 60px; border-radius: 16px;} /* Blue */
+        .btn-hard { background: #ff9800; width: 60px; height: 60px; border-radius: 16px;} /* Orange */
 
         @media (min-width: 768px) {
-            #controls {
-                height: 180px;
-                grid-template-columns: auto auto;
-                justify-content: center;
-                gap: 40px;
-            }
-            .d-pad, .action-pad {
-                width: 160px;
-            }
             body {
-                max-width: 500px;
+                max-width: 480px;
                 margin: 0 auto;
                 border-left: 1px solid #333;
                 border-right: 1px solid #333;
             }
+            #controls { height: 240px; }
         }
     </style>
 </head>
@@ -203,77 +210,89 @@
             <div class="value" id="score">0</div>
         </div>
         <div class="info-box">
-            <div class="label">Level</div>
+            <div class="label">Lvl</div>
             <div class="value" id="level">1</div>
         </div>
         <div class="info-box">
             <div class="label">Next</div>
-            <!-- Simple canvas for Next piece could go here, text for now -->
             <div class="value" id="next-piece-type">-</div>
         </div>
     </div>
 
-    <div class="tutorial">Drag screen to rotate camera</div>
+    <div class="tutorial">Swipe screen to rotate camera</div>
 
     <div id="game-container">
         <div id="canvas-container"></div>
         <div id="message-overlay">
             <h2 id="msg-title">3D TETRIS</h2>
             <p id="msg-text">Vertical 5x5x12</p>
-            <button id="start-btn">START GAME</button>
+            <button id="start-btn">START</button>
         </div>
     </div>
 
+    <!-- NEW LAYOUT -->
     <div id="controls">
-        <!-- Movement -->
-        <div class="d-pad">
-            <div class="btn btn-up" data-action="move-back">▲</div>
-            <div class="btn btn-left" data-action="move-left">◀</div>
-            <div class="btn btn-center" data-action="reset-cam">CAM</div>
-            <div class="btn btn-right" data-action="move-right">▶</div>
-            <div class="btn btn-down" data-action="move-front">▼</div>
+        <!-- Left Column: Rotate H & Soft Drop -->
+        <div class="control-column">
+            <div class="btn side-btn btn-rotate-h" data-action="rotate-y">
+                <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                <span>SPIN</span>
+            </div>
+            <div class="btn side-btn btn-soft" data-action="soft-drop">
+                <svg viewBox="0 0 24 24"><path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/></svg>
+            </div>
         </div>
 
-        <!-- Actions -->
-        <div class="action-pad">
-            <div class="btn btn-rotate-h" data-action="rotate-y">⟳<span>SPIN</span></div>
-            <div class="btn btn-rotate-v" data-action="rotate-x">⤹<span>FLIP</span></div>
-            <div class="btn btn-soft-drop" data-action="soft-drop">↓↓</div>
-            <div class="btn btn-hard-drop" data-action="hard-drop">⤓</div>
+        <!-- Center Column: D-PAD -->
+        <div class="control-column">
+            <div class="d-pad-grid">
+                <div class="btn btn-up" data-action="move-back">▲</div>
+                <div class="btn btn-left" data-action="move-left">◀</div>
+                <div class="btn btn-cam" data-action="reset-cam">CAM</div>
+                <div class="btn btn-right" data-action="move-right">▶</div>
+                <div class="btn btn-down" data-action="move-front">▼</div>
+            </div>
+        </div>
+
+        <!-- Right Column: Rotate V & Hard Drop -->
+        <div class="control-column">
+            <div class="btn side-btn btn-rotate-v" data-action="rotate-x">
+                <svg viewBox="0 0 24 24" style="transform: rotate(90deg)"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                <span>FLIP</span>
+            </div>
+            <div class="btn side-btn btn-hard" data-action="hard-drop">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            </div>
         </div>
     </div>
 
 <script>
 /**
  * 3D TETRIS VERTICAL
- * Logic and Rendering
+ * Improved visibility & Layout
  */
 
-// --- Config ---
 const BOARD_W = 5;
 const BOARD_D = 5;
 const BOARD_H = 12;
 const CUBE_SIZE = 1;
-const BLOCK_SPACING = 0.05; // Small gap for visual separation
+const BLOCK_SPACING = 0.05;
 
-// --- Tetromino Definitions (Shapes in 3D) ---
-// Defines coordinates relative to center (0,0,0)
-// Color format: Hex
+// Standard Tetris Colors (Brightened for visibility)
 const TETROMINOS = {
-    I: { color: 0x00f0f0, blocks: [[0,0,0], [-1,0,0], [1,0,0], [2,0,0]] },
-    J: { color: 0x0000f0, blocks: [[0,0,0], [-1,0,0], [1,0,0], [-1,0,1]] },
-    L: { color: 0xf0a000, blocks: [[0,0,0], [-1,0,0], [1,0,0], [1,0,1]] },
-    O: { color: 0xf0f000, blocks: [[0,0,0], [1,0,0], [0,0,1], [1,0,1]] }, // 2x2 flat
-    S: { color: 0x00f000, blocks: [[0,0,0], [1,0,0], [0,0,1], [-1,0,1]] },
-    T: { color: 0xa000f0, blocks: [[0,0,0], [-1,0,0], [1,0,0], [0,0,1]] },
-    Z: { color: 0xf00000, blocks: [[0,0,0], [-1,0,0], [0,0,1], [1,0,1]] }
+    I: { color: 0x00FFFF, blocks: [[0,0,0], [-1,0,0], [1,0,0], [2,0,0]] }, // Cyan
+    J: { color: 0x3333FF, blocks: [[0,0,0], [-1,0,0], [1,0,0], [-1,0,1]] }, // Blue
+    L: { color: 0xFFAA00, blocks: [[0,0,0], [-1,0,0], [1,0,0], [1,0,1]] }, // Orange
+    O: { color: 0xFFFF00, blocks: [[0,0,0], [1,0,0], [0,0,1], [1,0,1]] }, // Yellow
+    S: { color: 0x00FF00, blocks: [[0,0,0], [1,0,0], [0,0,1], [-1,0,1]] }, // Green
+    T: { color: 0xAA00FF, blocks: [[0,0,0], [-1,0,0], [1,0,0], [0,0,1]] }, // Purple
+    Z: { color: 0xFF0000, blocks: [[0,0,0], [-1,0,0], [0,0,1], [1,0,1]] }  // Red
 };
 
 const SHAPE_KEYS = Object.keys(TETROMINOS);
 
-// --- Global State ---
 let scene, camera, renderer;
-let grid = []; // 3D array [y][z][x] storing color or null
+let grid = [];
 let activePiece = null;
 let nextPieceType = null;
 let gameInterval = null;
@@ -292,40 +311,37 @@ let placedBlocksGroup;
 // Camera Controls
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
-let cameraAngle = Math.PI / 4; // Start angle
+let cameraAngle = Math.PI / 4;
 let cameraHeight = BOARD_H * 0.8;
 let targetCameraAngle = Math.PI / 4;
 
-// --- Initialization ---
 function init() {
     const container = document.getElementById('canvas-container');
 
-    // Scene setup
     scene = new THREE.Scene();
-    // Fog for depth perception
     scene.fog = new THREE.FogExp2(0x050510, 0.02);
 
-    // Camera
     camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
     updateCameraPosition();
 
-    // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true; // Enable shadows for better depth
     container.appendChild(renderer.domElement);
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Lighting - Increased brightness
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(10, 20, 10);
     scene.add(dirLight);
     
-    const pointLight = new THREE.PointLight(0x00f3ff, 0.5, 20);
-    pointLight.position.set(0, 10, 0);
-    scene.add(pointLight);
+    // Backlight to see blocks clearly against dark background
+    const backLight = new THREE.DirectionalLight(0x4444ff, 0.3);
+    backLight.position.set(-10, 10, -10);
+    scene.add(backLight);
 
     // Groups
     boardGroup = new THREE.Group();
@@ -333,11 +349,8 @@ function init() {
     ghostPieceGroup = new THREE.Group();
     placedBlocksGroup = new THREE.Group();
 
-    // Adjust board position so (0,0,0) is bottom center
-    // Our logical grid: x: 0..4, y: 0..11, z: 0..4
-    // World center offset: x: -2, z: -2
+    // Center offset
     const centeringOffset = new THREE.Vector3(-(BOARD_W-1)/2, 0, -(BOARD_D-1)/2);
-    
     boardGroup.position.copy(centeringOffset);
     activePieceGroup.position.copy(centeringOffset);
     ghostPieceGroup.position.copy(centeringOffset);
@@ -351,14 +364,11 @@ function init() {
     createBoardVisuals();
     initGrid();
 
-    // Event Listeners
     window.addEventListener('resize', onWindowResize, false);
     setupInputs();
     
-    // Start Loop
     requestAnimationFrame(animate);
     
-    // Show Menu
     document.getElementById('message-overlay').style.display = 'block';
     document.getElementById('start-btn').onclick = startGame;
 }
@@ -377,34 +387,28 @@ function initGrid() {
 }
 
 function createBoardVisuals() {
-    // Create the wireframe box container
     const totalW = BOARD_W * CUBE_SIZE;
     const totalH = BOARD_H * CUBE_SIZE;
     const totalD = BOARD_D * CUBE_SIZE;
 
-    // Main bounding box
+    // Box Frame
     const geometry = new THREE.BoxGeometry(totalW, totalH, totalD);
     const edges = new THREE.EdgesGeometry(geometry);
-    const material = new THREE.LineBasicMaterial({ color: 0x4444ff, transparent: true, opacity: 0.3 });
+    const material = new THREE.LineBasicMaterial({ color: 0x333366, transparent: true, opacity: 0.5 });
     const wireframe = new THREE.LineSegments(edges, material);
-    
-    // Shift up because BoxGeometry is centered
     wireframe.position.set((BOARD_W-1)/2, totalH/2 - 0.5, (BOARD_D-1)/2);
     boardGroup.add(wireframe);
 
-    // Grid Floor
-    const gridHelper = new THREE.GridHelper(BOARD_W, BOARD_W, 0x222222, 0x111111);
+    // Floor Grid
+    const gridHelper = new THREE.GridHelper(BOARD_W, BOARD_W, 0x00f3ff, 0x111122);
     gridHelper.position.set((BOARD_W-1)/2, -0.5, (BOARD_D-1)/2);
     boardGroup.add(gridHelper);
 }
-
-// --- Game Logic ---
 
 function startGame() {
     document.getElementById('message-overlay').style.display = 'none';
     initGrid();
     
-    // Clear visuals
     while(placedBlocksGroup.children.length > 0){ 
         placedBlocksGroup.remove(placedBlocksGroup.children[0]); 
     }
@@ -414,7 +418,7 @@ function startGame() {
     dropSpeed = 1000;
     isGameOver = false;
     isPaused = false;
-    activePiece = null; // Reset active piece
+    activePiece = null;
     
     updateScoreUI();
     spawnPiece();
@@ -424,7 +428,6 @@ function startGame() {
 }
 
 function spawnPiece() {
-    // Safety check: if game is over, don't spawn
     if (isGameOver) return;
 
     const type = nextPieceType || getRandomType();
@@ -436,11 +439,10 @@ function spawnPiece() {
         x: Math.floor(BOARD_W / 2),
         y: BOARD_H - 1,
         z: Math.floor(BOARD_D / 2),
-        blocks: JSON.parse(JSON.stringify(TETROMINOS[type].blocks)), // Deep copy
+        blocks: JSON.parse(JSON.stringify(TETROMINOS[type].blocks)),
         color: TETROMINOS[type].color
     };
 
-    // Check collision on spawn
     if (checkCollision(activePiece.x, activePiece.y, activePiece.z, activePiece.blocks)) {
         gameOver();
         return;
@@ -454,47 +456,26 @@ function getRandomType() {
 }
 
 function gameLoop() {
-    if (isPaused || isGameOver) return;
+    if (isPaused || isGameOver || !activePiece) return;
     movePiece(0, -1, 0);
 }
 
-// dx, dy, dz are direction of movement
-// returns true if moved successfully
 function movePiece(dx, dy, dz) {
     if (!activePiece) return false;
 
-    // Calculate absolute direction based on camera angle for X/Z inputs
-    // If dy is 0 (horizontal movement), adjust dx/dz based on camera
     let adjDx = dx;
     let adjDz = dz;
 
+    // Camera-relative movement logic
     if (dy === 0 && (dx !== 0 || dz !== 0)) {
-        // Simple 4-way camera adjustment
-        // Normalize angle to 0-2PI
         let angle = cameraAngle % (Math.PI * 2);
         if (angle < 0) angle += Math.PI * 2;
-
-        // Determine quadrant
-        // 0 (front): z+ is forward(screen down), x+ is right
-        // But we want controls: Up -> Z-, Down -> Z+, Left -> X-, Right -> X+ (Standard view)
-        // We align controls to the camera view.
-        
-        // Simplify: Round angle to nearest 90 deg (PI/2)
         const quarter = Math.round(angle / (Math.PI / 2)) % 4;
         
-        // Original input: 
-        // Up(dz=-1), Down(dz=1), Left(dx=-1), Right(dx=1)
-        
-        // Transform input based on camera rotation
-        // 0: No rotation
-        // 1: 90 deg left
-        // 2: 180 deg
-        // 3: 270 deg (90 right)
-        
         if (quarter === 0) { adjDx = dx; adjDz = dz; }
-        else if (quarter === 1) { adjDx = dz; adjDz = -dx; } // Rotated 90 deg
-        else if (quarter === 2) { adjDx = -dx; adjDz = -dz; } // Rotated 180
-        else if (quarter === 3) { adjDx = -dz; adjDz = dx; } // Rotated 270
+        else if (quarter === 1) { adjDx = dz; adjDz = -dx; }
+        else if (quarter === 2) { adjDx = -dx; adjDz = -dz; }
+        else if (quarter === 3) { adjDx = -dz; adjDz = dx; }
     }
 
     if (!checkCollision(activePiece.x + adjDx, activePiece.y + dy, activePiece.z + adjDz, activePiece.blocks)) {
@@ -504,35 +485,26 @@ function movePiece(dx, dy, dz) {
         updateActivePieceVisual();
         return true;
     } else {
-        // Collision detected
         if (dy < 0) {
-            // Hit bottom or block below
             lockPiece();
         }
         return false;
     }
 }
 
-// Axis: 'y' (spin), 'x' (flip), 'z' (roll)
 function rotatePiece(axis) {
     if (!activePiece) return;
 
     const oldBlocks = activePiece.blocks;
     const newBlocks = activePiece.blocks.map(b => {
         let x = b[0], y = b[1], z = b[2];
-        // 90 degree rotation matrix logic simplified
-        if (axis === 'y') return [-z, y, x]; // Yaw
-        if (axis === 'x') return [x, -z, y]; // Pitch/Flip
-        if (axis === 'z') return [-y, x, z]; // Roll
+        if (axis === 'y') return [-z, y, x];
+        if (axis === 'x') return [x, -z, y];
         return [x, y, z];
     });
 
-    // Wall kick - simple tries
-    // Try center, then offsets
-    const kicks = [
-        [0,0,0], [1,0,0], [-1,0,0], [0,0,1], [0,0,-1], // Horizontal
-        [0,1,0], [0,2,0] // Upward (floor kick)
-    ];
+    // Simple Wall Kicks
+    const kicks = [[0,0,0], [1,0,0], [-1,0,0], [0,0,1], [0,0,-1], [0,1,0], [0,2,0]];
 
     for (let k of kicks) {
         if (!checkCollision(activePiece.x + k[0], activePiece.y + k[1], activePiece.z + k[2], newBlocks)) {
@@ -548,9 +520,8 @@ function rotatePiece(axis) {
 
 function hardDrop() {
     if(!activePiece) return;
-    // Loop until movePiece returns false (collision)
     while (movePiece(0, -1, 0)) {
-        score += 2; // Bonus for hard drop
+        score += 2;
     }
     updateScoreUI();
 }
@@ -560,93 +531,69 @@ function checkCollision(px, py, pz, blocks) {
         let x = px + b[0];
         let y = py + b[1];
         let z = pz + b[2];
-
-        // Bounds check
         if (x < 0 || x >= BOARD_W || z < 0 || z >= BOARD_D || y < 0) return true;
-        
-        // Grid check
         if (y < BOARD_H && grid[y][z][x] !== null) return true;
     }
     return false;
 }
 
 function lockPiece() {
-    // Add to grid
     for (let b of activePiece.blocks) {
         let x = activePiece.x + b[0];
         let y = activePiece.y + b[1];
         let z = activePiece.z + b[2];
-        
-        if (y >= 0 && y < BOARD_H) { // Should always be true unless game over
+        if (y >= 0 && y < BOARD_H) {
             grid[y][z][x] = activePiece.color;
             addStaticBlockVisual(x, y, z, activePiece.color);
         }
     }
     
-    // 1. Check for lines to clear
     checkLines();
-
-    // 2. Disable active piece immediately to prevent double inputs
+    
+    // Temporarily disable activePiece to prevent input spam causing glitches
     activePiece = null;
-    updateActivePieceVisual(); // Clears the active/ghost mesh
+    updateActivePieceVisual();
 
-    // 3. Spawn next piece with a small delay
-    // This prevents accidental hard-drops on the new piece
+    // Small delay before next piece
     setTimeout(() => {
-        if (!isGameOver) {
-            spawnPiece();
-        }
-    }, 200);
+        if(!isGameOver) spawnPiece();
+    }, 150);
 }
 
 function addStaticBlockVisual(x, y, z, color) {
-    const mesh = createCubeMesh(color, 0.9);
+    const mesh = createCubeMesh(color, 1.0, false);
     mesh.position.set(x, y, z);
     placedBlocksGroup.add(mesh);
-    // Store reference in user data if needed for removal
-    mesh.userData = { x, y, z };
 }
 
 function checkLines() {
     let linesCleared = 0;
-    
-    // Check each layer from bottom up
     for (let y = 0; y < BOARD_H; y++) {
         let isFull = true;
         for (let z = 0; z < BOARD_D; z++) {
             for (let x = 0; x < BOARD_W; x++) {
-                if (grid[y][z][x] === null) {
-                    isFull = false;
-                    break;
-                }
+                if (grid[y][z][x] === null) { isFull = false; break; }
             }
             if (!isFull) break;
         }
-
         if (isFull) {
             clearLayer(y);
-            y--; // Re-check this index as blocks fell down
+            y--;
             linesCleared++;
         }
     }
-
     if (linesCleared > 0) {
-        score += [0, 100, 300, 500, 800, 1200][linesCleared] * level; // Classic scoring approx
-        // Level up every 5000 points
+        score += [0, 100, 300, 500, 800, 1200][linesCleared] * level;
         level = Math.floor(score / 5000) + 1;
         dropSpeed = Math.max(100, 1000 - (level - 1) * 100);
-        
-        // Update interval
         clearInterval(gameInterval);
         gameInterval = setInterval(gameLoop, dropSpeed);
-        
         updateScoreUI();
         rebuildBoardVisuals();
     }
 }
 
 function clearLayer(layerY) {
-    // Shift logical grid
     for (let y = layerY; y < BOARD_H - 1; y++) {
         for (let z = 0; z < BOARD_D; z++) {
             for (let x = 0; x < BOARD_W; x++) {
@@ -654,7 +601,6 @@ function clearLayer(layerY) {
             }
         }
     }
-    // Clear top layer
     for (let z = 0; z < BOARD_D; z++) {
         for (let x = 0; x < BOARD_W; x++) {
             grid[BOARD_H-1][z][x] = null;
@@ -663,11 +609,9 @@ function clearLayer(layerY) {
 }
 
 function rebuildBoardVisuals() {
-    // Clear all static blocks and redraw
     while(placedBlocksGroup.children.length > 0){ 
         placedBlocksGroup.remove(placedBlocksGroup.children[0]); 
     }
-
     for (let y = 0; y < BOARD_H; y++) {
         for (let z = 0; z < BOARD_D; z++) {
             for (let x = 0; x < BOARD_W; x++) {
@@ -693,59 +637,72 @@ function updateScoreUI() {
     document.getElementById('level').innerText = level;
 }
 
-// --- Rendering Helpers ---
+// --- Visual Helpers ---
 
-function createCubeMesh(color, opacity = 1.0) {
-    const geometry = new THREE.BoxGeometry(CUBE_SIZE - BLOCK_SPACING, CUBE_SIZE - BLOCK_SPACING, CUBE_SIZE - BLOCK_SPACING);
-    const material = new THREE.MeshLambertMaterial({ 
-        color: color, 
-        transparent: true, 
-        opacity: opacity < 1 ? opacity : 0.9
-    });
+function createCubeMesh(color, opacity = 1.0, isGhost = false) {
+    // Use slightly smaller size for gap
+    const size = CUBE_SIZE - BLOCK_SPACING;
+    const geometry = new THREE.BoxGeometry(size, size, size);
+    
+    let material;
+    if (isGhost) {
+        // Ghost: Wireframe-ish, low opacity
+        material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.2,
+            wireframe: true
+        });
+    } else {
+        // Active/Static: Solid, nice lighting
+        material = new THREE.MeshStandardMaterial({ 
+            color: color, 
+            emissive: color,
+            emissiveIntensity: 0.4, // Glows
+            transparent: true, 
+            opacity: opacity,
+            roughness: 0.1,
+            metalness: 0.1
+        });
+    }
     
     const mesh = new THREE.Mesh(geometry, material);
     
-    // Add edges for visibility
-    const edges = new THREE.EdgesGeometry(geometry);
-    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true }));
-    mesh.add(line);
+    // Add edge outline for better visibility
+    if (!isGhost) {
+        const edges = new THREE.EdgesGeometry(geometry);
+        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true }));
+        mesh.add(line);
+    }
     
     return mesh;
 }
 
 function updateActivePieceVisual() {
-    // Clear previous
     while(activePieceGroup.children.length > 0){ activePieceGroup.remove(activePieceGroup.children[0]); }
     while(ghostPieceGroup.children.length > 0){ ghostPieceGroup.remove(ghostPieceGroup.children[0]); }
 
     if(!activePiece) return;
 
-    // Draw Ghost
+    // GHOST
     let ghostY = activePiece.y;
     while (!checkCollision(activePiece.x, ghostY - 1, activePiece.z, activePiece.blocks)) {
         ghostY--;
     }
     
-    // Ghost Meshes
     for (let b of activePiece.blocks) {
-        const mesh = createCubeMesh(activePiece.color, 0.3);
+        const mesh = createCubeMesh(activePiece.color, 1.0, true); // isGhost = true
         mesh.position.set(activePiece.x + b[0], ghostY + b[1], activePiece.z + b[2]);
-        // Make ghost look like wireframe only
-        mesh.material.opacity = 0.1;
-        mesh.material.emissive = activePiece.color;
         ghostPieceGroup.add(mesh);
     }
 
-    // Draw Active
+    // ACTIVE
     for (let b of activePiece.blocks) {
-        const mesh = createCubeMesh(activePiece.color, 1.0);
+        const mesh = createCubeMesh(activePiece.color, 0.9, false); // isGhost = false
         mesh.position.set(activePiece.x + b[0], activePiece.y + b[1], activePiece.z + b[2]);
-        mesh.material.emissive = 0x222222; // slight glow
         activePieceGroup.add(mesh);
     }
 }
-
-// --- Camera & Interaction ---
 
 function onWindowResize() {
     const container = document.getElementById('canvas-container');
@@ -755,33 +712,25 @@ function onWindowResize() {
 }
 
 function updateCameraPosition() {
-    // Smooth rotation logic
     const radius = 12;
     const x = Math.sin(cameraAngle) * radius;
     const z = Math.cos(cameraAngle) * radius;
-    
     camera.position.set(x, cameraHeight, z);
-    camera.lookAt(0, BOARD_H/3, 0); // Look at lower center of board
+    camera.lookAt(0, BOARD_H/3, 0);
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    
-    // Smooth camera
     if (Math.abs(cameraAngle - targetCameraAngle) > 0.001) {
         cameraAngle += (targetCameraAngle - cameraAngle) * 0.1;
         updateCameraPosition();
     }
-    
     renderer.render(scene, camera);
 }
 
-// Inputs
 function setupInputs() {
-    // Keyboard
     document.addEventListener('keydown', (e) => {
         if(isGameOver) return;
-        
         switch(e.code) {
             case 'ArrowUp': movePiece(0, 0, -1); break;
             case 'ArrowDown': movePiece(0, 0, 1); break;
@@ -793,16 +742,13 @@ function setupInputs() {
         }
     });
 
-    // Touch / Mouse Drag for Camera
     const container = document.getElementById('canvas-container');
     
     container.addEventListener('mousedown', (e) => {
         isDragging = true;
         previousMousePosition = { x: e.clientX, y: e.clientY };
     });
-    
     window.addEventListener('mouseup', () => isDragging = false);
-    
     window.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         const deltaX = e.clientX - previousMousePosition.x;
@@ -810,30 +756,27 @@ function setupInputs() {
         previousMousePosition = { x: e.clientX, y: e.clientY };
     });
 
-    // Touch support for camera
     container.addEventListener('touchstart', (e) => {
         isDragging = true;
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }, {passive: false});
-
     container.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
         e.preventDefault();
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
-        targetCameraAngle -= deltaX * 0.015; // Faster on touch
+        targetCameraAngle -= deltaX * 0.015;
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }, {passive: false});
-    
     window.addEventListener('touchend', () => isDragging = false);
 
-    // On-screen Buttons
     const buttons = document.querySelectorAll('.btn');
     buttons.forEach(btn => {
         const action = btn.dataset.action;
         
+        // Support both touch and mouse without double firing
         const trigger = (e) => {
-            e.preventDefault(); // Stop ghost clicks
-            if(isGameOver && action !== 'hard-drop') return; // Allow retry if logic added? No, start btn is separate
+            e.preventDefault(); 
+            if(isGameOver) return;
 
             switch(action) {
                 case 'move-back': movePiece(0, 0, -1); break;
@@ -848,12 +791,11 @@ function setupInputs() {
             }
         };
 
-        btn.addEventListener('mousedown', trigger);
         btn.addEventListener('touchstart', trigger, {passive: false});
+        btn.addEventListener('mousedown', trigger);
     });
 }
 
-// Start
 init();
 
 </script>
